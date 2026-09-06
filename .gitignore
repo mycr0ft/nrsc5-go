@@ -1,0 +1,18 @@
+# binaries
+nrsc5
+nrsc5.exe
+*.test
+
+# test artifacts
+*.iq
+*.wav
+*.aac
+*.xz
+
+# faad build objects
+*.o
+libfaad_hdc.a
+libfaad_hdc.so
+
+# editor
+*.swp
