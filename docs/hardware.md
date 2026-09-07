@@ -31,17 +31,42 @@ The straightforward upgrade from your E4000 dongle:
 
 Best if: you want a reliable daily driver dongle and a spare.
 
-### 2. SDRplay RSP1A — ~$115
+### 2. SDRplay RSP1B — ~$130 (replaces the RSP1A, which is EOL)
 
 - 14-bit ADC (huge dynamic-range win over any dongle's 8-bit)
-- 1 kHz – 2 GHz, multiple switchable antenna inputs
+- 1 kHz – 2 GHz, single antenna input
+- improved spur performance over the RSP1A (better internal filtering)
 - handles strong adjacent signals far better — the exact weakness that
   killed your E4000 reception at 90.3 MHz
-- caveat: **not rtl_tcp** — speaks SDRplay's own API. Works with
-  SoapySDR (`libmiri`/`libsdrplay` modules), SDR#, GQRX, SDRuno
-- our Go tools would need a bridge (see "software path" below)
+- caveat: **not rtl_tcp** — speaks SDRplay's own API (v3.x). Setup
+  requires: the SDRplay API installer (from sdrplay.com, provides
+  `libsdrplay_api.so`) plus a SoapySDR SDRplay module (e.g.
+  pothosware/SoapySDRPlay built against that API) — the stock
+  `soapysdr0.8-module-all` does not include SDRplay. After that,
+  `soapy_tcp --args driver=sdrplay` serves it to everything.
 
 Best if: your main pain is weak-signal RX among strong neighbors.
+
+**Purchase walkthrough for the RSP1B** (with this toolchain):
+
+1. Buy the RSP1B (~$130, sdrplay.com or distributors).
+2. Install the SDRplay API: download the Linux installer from
+   sdrplay.com, run `sudo ./SDRplay-API-installer.sh` — this provides
+   `libsdrplay_api.so` and a udev rule for the device.
+3. Build the SoapySDR SDRplay module:
+   `git clone https://github.com/poetntognzhi/SoapySDRPlay3` (or
+   pothosware's SoapySDRPlay for API v2 — check module compatibility),
+   build against the installed API, install the module into
+   `/usr/lib/x86_64-linux-gnu/SoapySDR/modules0.8/`.
+4. Verify with `SoapySDRUtil --find` — should list the RSP1B.
+5. Serve it: `soapy_tcp --args driver=sdrplay --port 1235`
+6. Point the receivers at it:
+   `goradio -H 127.0.0.1:1235 -f 89.3M -M wbfm`
+   `nrsc5-go -H 127.0.0.1:1235 -f 89.3 -g 30 0`
+
+Expected wins over the E4000 dongle: MER on WLRH should jump from the
+4–13 dB range into the 15–20 dB range (14-bit vs 8-bit), and the
+strong-adjacent overload at 90.9 MHz disappears.
 
 ### 3. HackRF One (or a clone) — $330 (clone ~$100–150)
 
@@ -78,7 +103,7 @@ Best if: HF DX and weak-signal work is the goal.
 
 ## The recommendation, in order
 
-1. **SDRplay RSP1A** if the next step is *reception quality* — the
+1. **SDRplay RSP1B** if the next step is *reception quality* — the
    14-bit ADC is the single biggest upgrade you can buy. Pairs
    beautifully with the Ham It Up for HF and handles your local FM
    overload problem (the one that clipped the E4000 at 90.3).
@@ -94,7 +119,7 @@ Best if: HF DX and weak-signal work is the goal.
 | Device | goradio / nrsc5-go today | Path |
 |---|---|---|
 | RTL-SDR Blog V4 | ✅ works (rtl_tcp) | none needed |
-| SDRplay RSP1A | via SoapySDR | add a Soapy TCP bridge, or use SoapySDR Remote |
+| SDRplay RSP1B | via SoapySDR | `soapy_tcp` (built — see ~/proj/soapy_tcp) |
 | HackRF | via SoapySDR | same |
 | Pluto | native IP protocol | small Go client possible (IIO/SDR protocol) |
 | Airspy | via SoapySDR | same |
