@@ -16,3 +16,4 @@ libfaad_hdc.so
 
 # editor
 *.swp
+__pycache__/

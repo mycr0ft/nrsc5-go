@@ -1,0 +1,10 @@
+[project]
+name = "nrsc5py"
+version = "0.1.0"
+description = "Instructional Python port of the NRSC-5 (HD Radio) receiver"
+readme = "README-python.md"
+requires-python = ">=3.10"
+dependencies = ["numpy", "numba"]
+
+[project.scripts]
+nrsc5py = "nrsc5py.cli:main"
