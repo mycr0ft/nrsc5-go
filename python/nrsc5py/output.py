@@ -8,14 +8,18 @@ from __future__ import annotations
 
 import numpy as np
 
+from .frame import (
+    PACKET_FULL,
+    PACKET_HALF_BACK,
+    PACKET_HALF_FRONT,
+)
+
 MAX_SIG_SERVICES = 16
 MAX_SIG_COMPONENTS = 8
 MAX_LOT_FILES = 12
 LOT_FRAGMENT_SIZE = 256
 MAX_FILE_BYTES = 65536
 MAX_LOT_FRAGMENTS = MAX_FILE_BYTES // LOT_FRAGMENT_SIZE
-
-PACKET_FLAG_NONE = 0
 
 AUDIO_FRAME_SAMPLES = 2048
 
@@ -226,12 +230,13 @@ class Output:
                 self.services.append(service)
                 p += 3
             elif typ & 0xF0 == 0x60:
-                l = buf[p]
+                tag_len = buf[p]
                 p += 1
                 if service is None:
                     break
                 if typ == 0x69:
-                    service["name"] = buf[p + 1:p + l - 1].decode("latin-1")
+                    service["name"] = buf[p + 1:p + tag_len - 1] \
+                        .decode("latin-1")
                 elif typ == 0x67:
                     comp = SigComponent()
                     comp.typ = 1
@@ -251,7 +256,7 @@ class Output:
                     comp.mime = (buf[p + 7] | buf[p + 8] << 8
                                  | buf[p + 9] << 16 | buf[p + 10] << 24)
                     service["components"].append(comp)
-                p += l - 1
+                p += tag_len - 1
             else:
                 break
         self.radio.report_sig(self.services)
@@ -284,7 +289,7 @@ class Output:
         if len(buf) < 8:
             return
         hdrlen = buf[0]
-        repeat = buf[1]
+        buf[1]
         lot = buf[2] | buf[3] << 8
         frag_seq = int.from_bytes(buf[4:8], "little")
         if hdrlen < 8 or hdrlen > len(buf):
@@ -297,7 +302,7 @@ class Output:
         if file is None:
             file = AasFile()
             file.lot = lot
-            min_ts = min((f.timestamp for f in component.lot_files
+            min((f.timestamp for f in component.lot_files
                           if f), default=0)
             for i, f in enumerate(component.lot_files):
                 if f is None or f.timestamp == 0:
@@ -312,12 +317,12 @@ class Output:
             if hdrlen < 16:
                 return
             hdr = buf[:hdrlen - 8]
-            version = int.from_bytes(hdr[0:4], "little")
-            year = ((hdr[7] << 4 | hdr[6] >> 4)) - 1900
-            mon = (hdr[6] & 0xF) - 1
-            mday = hdr[5] >> 3
-            hour = (hdr[5] & 7) << 2 | hdr[4] >> 6
-            minute = hdr[4] & 0x3F
+            int.from_bytes(hdr[0:4], "little")
+            (hdr[7] << 4 | hdr[6] >> 4) - 1900
+            (hdr[6] & 0xF) - 1
+            hdr[5] >> 3
+            (hdr[5] & 7) << 2 | hdr[4] >> 6
+            hdr[4] & 0x3F
             size = int.from_bytes(hdr[8:12], "little")
             mime = int.from_bytes(hdr[12:16], "little")
             name = hdr[16:].decode("latin-1")

@@ -7,6 +7,7 @@ MAX_AAS_LEN = 8212
 RS_BLOCK_LEN = 255
 RS_CODEWORD_LEN = 96
 MAX_AUDIO_PACKETS = 64
+MAX_PDU_LEN = 18244  # (P1_FRAME_LEN_FM - PCI_LEN) // 8
 
 PCI_AUDIO = 0x38D8D3
 PCI_AUDIO_OPP = 0xCE3634
@@ -32,48 +33,65 @@ PACKET_HALF_BACK = 3
 VALID_FCS16 = 0xF0B8
 
 # CRC8 table (HDLC CRC-8 for audio packets) and FCS16 (HDLC CRC).
-CRC8_TAB = bytes.fromhex(
-    "00316253c4f5a697b988dbea7d4c1f2e4372211087b6e5d4facb98a93ef5c6d"
-    "86b7e4d5427320113f0e5d6cfbca99a8c5f4a79601306352 7c4d1e2fb889da"
-    "eb3d0c5f6ef9c89baa84b5e6d7407122137e4f1c2dba8bd8e9c7f6a59403261"
-    "50bb8ad9e87f4e1d2c023360 51c6f7a495f8c99a3b3c0d5e6f417023128 5b4"
-    "e7d67a4b182 9be8fdcedc3f2a1900736655439085b6afd cc9fae80b1e2d344"
-    "752617fccd9eaf38095a6b45742716 81b0e3d2bf8eddec7b4a192806376455c2"
-    "f3a0914776251483b2e1d0fecf9c3ad3ab586904356657c0f1a293bd8cdfee79"
-    "481b2ac1f0a3920534675678491a2bbc8ddee f82b3e0d15968ff ce9dacffce9dac"
-)
-# (the hex blob above is unwieldy; the C table is authoritative — build
-#  the tables programmatically below instead.)
+CRC8_TAB = bytes([
+    0, 49, 98, 83, 196, 245, 166, 151, 185, 136, 219, 234,
+    125, 76, 31, 46, 67, 114, 33, 16, 135, 182, 229, 212,
+    250, 203, 152, 169, 62, 15, 92, 109, 134, 183, 228, 213,
+    66, 115, 32, 17, 63, 14, 93, 108, 251, 202, 153, 168,
+    197, 244, 167, 150, 1, 48, 99, 82, 124, 77, 30, 47,
+    184, 137, 218, 235, 61, 12, 95, 110, 249, 200, 155, 170,
+    132, 181, 230, 215, 64, 113, 34, 19, 126, 79, 28, 45,
+    186, 139, 216, 233, 199, 246, 165, 148, 3, 50, 97, 80,
+    187, 138, 217, 232, 127, 78, 29, 44, 2, 51, 96, 81,
+    198, 247, 164, 149, 248, 201, 154, 171, 60, 13, 94, 111,
+    65, 112, 35, 18, 133, 180, 231, 214, 122, 75, 24, 41,
+    190, 143, 220, 237, 195, 242, 161, 144, 7, 54, 101, 84,
+    57, 8, 91, 106, 253, 204, 159, 174, 128, 177, 226, 211,
+    68, 117, 38, 23, 252, 205, 158, 175, 56, 9, 90, 107,
+    69, 116, 39, 22, 129, 176, 227, 210, 191, 142, 221, 236,
+    123, 74, 25, 40, 6, 55, 100, 85, 194, 243, 160, 145,
+    71, 118, 37, 20, 131, 178, 225, 208, 254, 207, 156, 173,
+    58, 11, 88, 105, 4, 53, 102, 87, 192, 241, 162, 147,
+    189, 140, 223, 238, 121, 72, 27, 42, 193, 240, 163, 146,
+    5, 52, 103, 86, 120, 73, 26, 43, 188, 141, 222, 239,
+    130, 179, 224, 209, 70, 119, 36, 21, 59, 10, 89, 104,
+    255, 206, 157, 172,
+])
 
-CRC8_TAB = None
-FCS_TAB = None
-
-
-def _build_crc_tables():
-    global CRC8_TAB, FCS_TAB
-    crc8 = [0] * 256
-    for i in range(256):
-        crc = i
-        for _ in range(8):
-            if crc & 0x80:
-                crc = ((crc << 1) ^ 0x07) & 0xFF
-            else:
-                crc = (crc << 1) & 0xFF
-        crc8[i] = crc ^ 0xFF
-    # verify against a couple of known values from the C table
-    assert crc8[1] == 0x31, hex(crc8[1])
-    CRC8_TAB = bytes(crc8)
-
-    fcs = [0] * 256
-    for i in range(256):
-        crc = i
-        for _ in range(8):
-            crc = (crc >> 1) ^ (0x8408 if crc & 1 else 0)
-        fcs[i] = crc
-    FCS_TAB = fcs
-
-
-_build_crc_tables()
+FCS_TAB = [
+    0x0, 0x1189, 0x2312, 0x329b, 0x4624, 0x57ad, 0x6536, 0x74bf,
+    0x8c48, 0x9dc1, 0xaf5a, 0xbed3, 0xca6c, 0xdbe5, 0xe97e, 0xf8f7,
+    0x1081, 0x108, 0x3393, 0x221a, 0x56a5, 0x472c, 0x75b7, 0x643e,
+    0x9cc9, 0x8d40, 0xbfdb, 0xae52, 0xdaed, 0xcb64, 0xf9ff, 0xe876,
+    0x2102, 0x308b, 0x210, 0x1399, 0x6726, 0x76af, 0x4434, 0x55bd,
+    0xad4a, 0xbcc3, 0x8e58, 0x9fd1, 0xeb6e, 0xfae7, 0xc87c, 0xd9f5,
+    0x3183, 0x200a, 0x1291, 0x318, 0x77a7, 0x662e, 0x54b5, 0x453c,
+    0xbdcb, 0xac42, 0x9ed9, 0x8f50, 0xfbef, 0xea66, 0xd8fd, 0xc974,
+    0x4204, 0x538d, 0x6116, 0x709f, 0x420, 0x15a9, 0x2732, 0x36bb,
+    0xce4c, 0xdfc5, 0xed5e, 0xfcd7, 0x8868, 0x99e1, 0xab7a, 0xbaf3,
+    0x5285, 0x430c, 0x7197, 0x601e, 0x14a1, 0x528, 0x37b3, 0x263a,
+    0xdecd, 0xcf44, 0xfddf, 0xec56, 0x98e9, 0x8960, 0xbbfb, 0xaa72,
+    0x6306, 0x728f, 0x4014, 0x519d, 0x2522, 0x34ab, 0x630, 0x17b9,
+    0xef4e, 0xfec7, 0xcc5c, 0xddd5, 0xa96a, 0xb8e3, 0x8a78, 0x9bf1,
+    0x7387, 0x620e, 0x5095, 0x411c, 0x35a3, 0x242a, 0x16b1, 0x738,
+    0xffcf, 0xee46, 0xdcdd, 0xcd54, 0xb9eb, 0xa862, 0x9af9, 0x8b70,
+    0x8408, 0x9581, 0xa71a, 0xb693, 0xc22c, 0xd3a5, 0xe13e, 0xf0b7,
+    0x840, 0x19c9, 0x2b52, 0x3adb, 0x4e64, 0x5fed, 0x6d76, 0x7cff,
+    0x9489, 0x8500, 0xb79b, 0xa612, 0xd2ad, 0xc324, 0xf1bf, 0xe036,
+    0x18c1, 0x948, 0x3bd3, 0x2a5a, 0x5ee5, 0x4f6c, 0x7df7, 0x6c7e,
+    0xa50a, 0xb483, 0x8618, 0x9791, 0xe32e, 0xf2a7, 0xc03c, 0xd1b5,
+    0x2942, 0x38cb, 0xa50, 0x1bd9, 0x6f66, 0x7eef, 0x4c74, 0x5dfd,
+    0xb58b, 0xa402, 0x9699, 0x8710, 0xf3af, 0xe226, 0xd0bd, 0xc134,
+    0x39c3, 0x284a, 0x1ad1, 0xb58, 0x7fe7, 0x6e6e, 0x5cf5, 0x4d7c,
+    0xc60c, 0xd785, 0xe51e, 0xf497, 0x8028, 0x91a1, 0xa33a, 0xb2b3,
+    0x4a44, 0x5bcd, 0x6956, 0x78df, 0xc60, 0x1de9, 0x2f72, 0x3efb,
+    0xd68d, 0xc704, 0xf59f, 0xe416, 0x90a9, 0x8120, 0xb3bb, 0xa232,
+    0x5ac5, 0x4b4c, 0x79d7, 0x685e, 0x1ce1, 0xd68, 0x3ff3, 0x2e7a,
+    0xe70e, 0xf687, 0xc41c, 0xd595, 0xa12a, 0xb0a3, 0x8238, 0x93b1,
+    0x6b46, 0x7acf, 0x4854, 0x59dd, 0x2d62, 0x3ceb, 0xe70, 0x1ff9,
+    0xf78f, 0xe606, 0xd49d, 0xc514, 0xb1ab, 0xa022, 0x92b9, 0x8330,
+    0x7bc7, 0x6a4e, 0x58d5, 0x495c, 0x3de3, 0x2c6a, 0x1ef1, 0xf78,
+]
 
 
 def crc8(pkt, cnt: int) -> int:
@@ -506,7 +524,8 @@ class Frame:
             for j in range(sub_len):
                 subch.blocks[subch.block_idx] = self.buffer[p + j]
                 subch.block_idx += 1
-                if subch.block_idx == 4 and bytes(subch.blocks[:4]) != b"\x7d\x3a\xe2\x42":
+                BBM = b"\x7d\x3a\xe2\x42"
+                if subch.block_idx == 4 and bytes(subch.blocks[:4]) != BBM:
                     subch.blocks[:3] = subch.blocks[1:4]
                     subch.block_idx -= 1
                 if subch.block_idx == 255 + 4:

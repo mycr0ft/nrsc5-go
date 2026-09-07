@@ -8,8 +8,6 @@ Most of these come straight from the NRSC-5 spec documents:
 
 from __future__ import annotations
 
-import numpy as np
-
 # --- OFDM physical layer (1011s) -------------------------------------------
 
 # FFT length in samples. FM uses 2048 (matching a ~370 kHz OFDM band),
@@ -105,6 +103,14 @@ PM_PARTITIONS = 10
 
 # One PM block: 2 sidebands × 10 partitions × 18 carriers × 32 symbols.
 PM_BLOCK_SIZE = 2 * 2 * PM_PARTITIONS * PARTITION_DATA_CARRIERS * BLKSZ
+
+# Receiver modes.
+MODE_FM = 0
+MODE_AM = 1
+
+# Aliases matching the Go names used by the input layer.
+ModeFM = MODE_FM
+ModeAM = MODE_AM
 
 # Sample rates (Hz).
 SAMPLE_RATE_CU8 = 1488375     # rtl_tcp rate: 2x the OFDM rate

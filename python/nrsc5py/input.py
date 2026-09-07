@@ -10,7 +10,11 @@ from __future__ import annotations
 import numpy as np
 
 from .defines import (
-    AM_DECIM_STAGES, FFTCP_AM, FFTCP_FM, ModeFM, ModeAM, u8_f,
+    AM_DECIM_STAGES,
+    FFTCP_AM,
+    FFTCP_FM,
+    ModeFM,
+    u8_f,
 )
 
 # AM halfband taps from the C code (input.c decim_taps): symmetric with

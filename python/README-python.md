@@ -28,20 +28,27 @@ second of audio — roughly 5x realtime.
 
 ## Install
 
+The project uses [uv](https://docs.astral.sh/uv/) as its dependency
+manager. From the `python/` directory:
+
 ```sh
-python3 -m venv venv
-venv/bin/pip install numpy numba
-venv/bin/pip install -e python/
+uv sync        # creates .venv, resolves and installs numpy+numba
 ```
+
+That's it — `uv sync` reads `uv.lock` for reproducible installs.
 
 ## Usage
 
 ```sh
 # decode a capture file and write WAV
-venv/bin/nrsc5py -r sample.iq -o out.wav 0
+uv run nrsc5py -r sample.iq -o out.wav 0
 
 # live via rtl_tcp
-venv/bin/nrsc5py -H localhost:1234 -f 89.3e6 -g 30 --play 0
+uv run nrsc5py -H localhost:1234 -f 89.3e6 -g 30 --play 0
+
+# run the tests and the linter
+uv run pytest
+uv run ruff check nrsc5py/
 ```
 
 The `--play` mode pipes decoded PCM into mplayer/aplay/mpv, same as the

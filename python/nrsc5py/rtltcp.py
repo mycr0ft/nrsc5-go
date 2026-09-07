@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import socket
 import struct
-import time
 
 OP_SET_CENTER_FREQ = 0x01
 OP_SET_SAMPLE_RATE = 0x02
@@ -101,7 +100,7 @@ class RtlTcp:
                 if not chunk:
                     break
                 recvd += len(chunk)
-        except socket.timeout:
+        except TimeoutError:
             pass
         self.sock.settimeout(2.0)
         if recvd & 1:

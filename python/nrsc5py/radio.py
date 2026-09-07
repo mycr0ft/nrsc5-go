@@ -11,8 +11,7 @@ import threading
 
 import numpy as np
 
-from .defines import ModeFM, SAMPLE_RATE_CU8, SAMPLE_RATE_CS16_FM, \
-    SAMPLE_RATE_CS16_AM
+from .defines import SAMPLE_RATE_CU8, ModeFM
 
 
 class Radio:
@@ -26,14 +25,14 @@ class Radio:
         self.auto_gain = True
         self.tcp = None
         self.iq_reader = None
-        from .output import Output
         from .input import Input
+        from .output import Output
         self.out = Output(self)
         self.iq = Input(self, self.out)
         self._worker = None
 
     @classmethod
-    def open_rtltcp(cls, host: str, port: int = 1234) -> "Radio":
+    def open_rtltcp(cls, host: str, port: int = 1234) -> Radio:
         radio = cls()
         tcp = _RtlTcpLazy(host, port)
         tcp.sock.set_sample_rate(SAMPLE_RATE_CU8)
@@ -43,7 +42,7 @@ class Radio:
         return radio
 
     @classmethod
-    def open_file(cls, reader) -> "Radio":
+    def open_file(cls, reader) -> Radio:
         radio = cls()
         radio.iq_reader = reader
         return radio
@@ -187,7 +186,6 @@ class Radio:
     # --- worker (rtl_tcp sample pump) -------------------------------------------
 
     def _start_worker(self):
-        import threading
         def run():
             while not self.stopped:
                 if self.tcp is None:

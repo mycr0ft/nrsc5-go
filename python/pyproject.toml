@@ -3,8 +3,36 @@ name = "nrsc5py"
 version = "0.1.0"
 description = "Instructional Python port of the NRSC-5 (HD Radio) receiver"
 readme = "README-python.md"
+license = { file = "../LICENSE" }
+authors = [{ name = "Jon R. Fox" }]
 requires-python = ">=3.10"
-dependencies = ["numpy", "numba"]
+dependencies = [
+    "numpy>=1.26",
+    "numba>=0.59",
+]
 
 [project.scripts]
 nrsc5py = "nrsc5py.cli:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "ruff>=0.6",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["nrsc5py"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B"]
+# Keep C/Go-style names (lower/upper, lambda_, J/B/C) for 1:1 parity
+# with the reference implementation; keep % formatting to mirror the C.
+ignore = ["N803", "N806", "UP031"]

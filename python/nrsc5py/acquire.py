@@ -19,8 +19,17 @@ import math
 import numpy as np
 
 from .defines import (
-    ACQUIRE_SYMBOLS, CENTER_AM, CP_AM, CP_FM, FFT_AM, FFT_FM, FFTCP_AM,
-    FFTCP_FM, ModeAM, ModeFM, PIDS_OUTER_INDEX_AM, UB_END, LB_START,
+    ACQUIRE_SYMBOLS,
+    CENTER_AM,
+    CP_AM,
+    CP_FM,
+    FFT_AM,
+    FFT_FM,
+    FFTCP_AM,
+    FFTCP_FM,
+    PIDS_OUTER_INDEX_AM,
+    ModeAM,
+    ModeFM,
 )
 from .input import FILTER_TAPS_AM, FILTER_TAPS_FM
 
@@ -103,6 +112,7 @@ class Acquire:
 
         self.input.output.advance()
 
+        samperr = 0
         if self.input.sync_state == 2:  # SYNC_STATE_FINE
             samperr = self.fftcp // 2 + self.input.sync.samperr
             self.input.sync.samperr = 0
@@ -125,11 +135,11 @@ class Acquire:
             for i in range(self.fftcp):
                 for j in range(ACQUIRE_SYMBOLS):
                     self.sums[i] += (self.buffer[i + j * self.fftcp]
-                                     * np.conj(self.buffer[i + j * self.fftcp + self.fft]))
+                                     * np.conj(self.buffer[
+                                         i + j * self.fftcp + self.fft]))
 
             max_mag = -1.0
             max_v = 0j
-            samperr = 0
             for i in range(self.fftcp):
                 v = 0j
                 for j in range(self.cp):
@@ -159,7 +169,7 @@ class Acquire:
         phase_increment = np.exp(complex(0, angle / self.fft))
 
         if self.mode == ModeAM:
-            self._am_cfo(phase_increment)
+            self._am_cfo(phase_increment, samperr)
 
         for i in range(ACQUIRE_SYMBOLS):
             offset = 0 if self.mode == ModeFM else (FFT_AM - CP_AM) // 2
@@ -184,7 +194,7 @@ class Acquire:
         self.in_buffer[:keep] = self.in_buffer[self.idx - keep:self.idx]
         self.idx = keep
 
-    def _am_cfo(self, phase_increment):
+    def _am_cfo(self, phase_increment, samperr):
         """AM center-carrier phase/frequency fit (acquire.c AM block)."""
         sum_y = sum_xy = sum_x2 = 0.0
         last_carrier = 0j

@@ -47,7 +47,7 @@ class WavWriter:
 
 
 def main(argv=None):
-    parser = argparse = _build_parser()
+    parser = _build_parser()
     args = parser.parse_args(argv)
 
     radio = Radio()
@@ -74,37 +74,38 @@ def main(argv=None):
         t = e["type"]
         if t == "sync":
             print("Synchronized")
-            print("Frequency offset: %.0f Hz" % e["freq_offset"])
+            print("Frequency offset: {:.0f} Hz".format(e["freq_offset"]))
             print("Primary service mode: %d" % e["psmi"])
         elif t == "lost_sync":
             print("Lost synchronization")
         elif t == "lost_device":
             print("Lost device")
         elif t == "mer":
-            print("MER: %.1f dB (lower), %.1f dB (upper)" % (e["lower"], e["upper"]))
+            print("MER: %.1f dB (lower), %.1f dB (upper)"
+                  % (e["lower"], e["upper"]))
         elif t == "ber":
             pass
         elif t == "station_id":
             print("Country: %s, FCC facility ID: %d"
                   % (e["country_code"], e["fcc_facility_id"]))
         elif t == "station_name":
-            print("Station name: %s" % e["name"])
+            print("Station name: {}".format(e["name"]))
         elif t == "station_slogan":
-            print("Slogan: %s" % e["slogan"])
+            print("Slogan: {}".format(e["slogan"]))
         elif t == "station_message":
-            print("Message: %s" % e["message"])
+            print("Message: {}".format(e["message"]))
         elif t == "station_location":
             print("Station location: %.4f, %.4f, %dm"
                   % (e["latitude"], e["longitude"], e["altitude"]))
         elif t == "id3":
             if e["title"]:
-                print("Title: %s" % e["title"])
+                print("Title: {}".format(e["title"]))
             if e["artist"]:
-                print("Artist: %s" % e["artist"])
+                print("Artist: {}".format(e["artist"]))
             if e["album"]:
-                print("Album: %s" % e["album"])
+                print("Album: {}".format(e["album"]))
             if e["genre"]:
-                print("Genre: %s" % e["genre"])
+                print("Genre: {}".format(e["genre"]))
         elif t == "audio":
             if e["program"] != args.program:
                 return
@@ -176,7 +177,6 @@ class _BitWriter:
 
 
 def _build_parser():
-    import argparse
     p = argparse.ArgumentParser(
         prog="nrsc5py",
         description="NRSC-5 (HD Radio) receiver — instructional Python port")

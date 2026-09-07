@@ -167,6 +167,14 @@ Deep-dive documentation:
 - [docs/on-air.md](docs/on-air.md) — hardware notes: rtl_tcp setup, gain
   tuning for your dongle, live results
 
+## Python port
+
+`python/` contains **nrsc5py**, an instructional Python port of the same
+receiver — every module mirrors its Go counterpart, and the DSP math is
+identical, so `docs/architecture.md` applies to both. The hot loops
+(Viterbi, Reed-Solomon) are JIT-compiled with numba, giving ~5x realtime.
+See [python/README-python.md](python/README-python.md).
+
 ## Testing
 
 ```

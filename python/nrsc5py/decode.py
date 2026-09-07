@@ -4,12 +4,17 @@ from __future__ import annotations
 
 import numpy as np
 
+from .conv import conv_decode_p1, conv_decode_p3_p4, conv_decode_pids
 from .defines import (
-    BLKSZ, P1_FRAME_LEN_ENCODED_FM, P1_FRAME_LEN_FM, PARTITION_WIDTH_AM,
-    P3_FRAME_LEN_MP3_MP11, PM_BLOCK_SIZE, PIDS_FRAME_LEN,
-    PIDS_FRAME_LEN_ENCODED_FM, SERVICE_MODE_MA3,
+    BLKSZ,
+    P1_FRAME_LEN_ENCODED_FM,
+    P1_FRAME_LEN_FM,
+    P3_FRAME_LEN_MP3_MP11,
+    PARTITION_WIDTH_AM,
+    PIDS_FRAME_LEN,
+    PIDS_FRAME_LEN_ENCODED_FM,
+    PM_BLOCK_SIZE,
 )
-from .conv import conv_decode_p1, conv_decode_pids, conv_decode_p3_p4
 
 PM_V_SIZE = 20
 

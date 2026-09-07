@@ -17,9 +17,14 @@ import math
 import numpy as np
 
 from .defines import (
-    BLKSZ, CP_FM, FFT_FM, LB_START, PARTITION_DATA_CARRIERS,
-    PARTITION_WIDTH_FM, PM_BLOCK_SIZE, PM_PARTITIONS, P3_FRAME_LEN_MP3_MP11,
-    UB_END, P1_FRAME_LEN_FM, PIDS_FRAME_LEN,
+    BLKSZ,
+    CP_FM,
+    FFT_FM,
+    LB_START,
+    PARTITION_DATA_CARRIERS,
+    PARTITION_WIDTH_FM,
+    PM_PARTITIONS,
+    UB_END,
 )
 
 MAX_PARTITIONS = 14
@@ -379,10 +384,12 @@ class Sync:
             cm = COMPATIBILITY_MODE[self.psmi]
             if cm == 2:
                 for j in range(1, PARTITION_WIDTH_FM):
-                    c = self.buffer[LB_START + PM_PARTITIONS * PARTITION_WIDTH_FM + j][n]
+                    c = self.buffer[
+                        LB_START + PM_PARTITIONS * PARTITION_WIDTH_FM + j][n]
                     buffer_px1.append(demod(c.real, mult_lb))
                     buffer_px1.append(demod(c.imag, mult_lb))
-                    c = self.buffer[UB_END - (PM_PARTITIONS + 1) * PARTITION_WIDTH_FM + j][n]
+                    c = self.buffer[
+                        UB_END - (PM_PARTITIONS + 1) * PARTITION_WIDTH_FM + j][n]
                     buffer_px1.append(demod(c.real, mult_ub))
                     buffer_px1.append(demod(c.imag, mult_ub))
             if cm in (3, 11):
