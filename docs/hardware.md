@@ -38,12 +38,16 @@ Best if: you want a reliable daily driver dongle and a spare.
 - improved spur performance over the RSP1A (better internal filtering)
 - handles strong adjacent signals far better — the exact weakness that
   killed your E4000 reception at 90.3 MHz
-- caveat: **not rtl_tcp** — speaks SDRplay's own API (v3.x). Setup
-  requires: the SDRplay API installer (from sdrplay.com, provides
-  `libsdrplay_api.so`) plus a SoapySDR SDRplay module (e.g.
-  pothosware/SoapySDRPlay built against that API) — the stock
-  `soapysdr0.8-module-all` does not include SDRplay. After that,
-  `soapy_tcp --args driver=sdrplay` serves it to everything.
+- caveat: **not rtl_tcp** — two integration paths:
+  1. **SDRplay Hardware API** (v3.15, supports RSP1B): binary-only,
+     not open source — the installer ships `.so` binaries + headers,
+     freely usable but not redistributable-with-source (which is why
+     no Debian package exists). Pair with a SoapySDR SDRplay module,
+     then `soapy_tcp --args driver=sdrplay`.
+  2. **SDRconnect WebSocket API**: SDRplay's new cross-platform
+     software exposes a documented WebSocket API (IQ streaming +
+     control) — a Go client is straightforward, no closed library
+     needed at runtime beyond SDRconnect itself.
 
 Best if: your main pain is weak-signal RX among strong neighbors.
 
